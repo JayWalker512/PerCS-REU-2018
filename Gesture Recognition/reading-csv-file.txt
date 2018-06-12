@@ -1,0 +1,30 @@
+COLUMN KEYS
+0-128:
+ x acceleration
+128-256:
+ y acceleration
+256-384: 
+ z acceleration
+385: 
+
+classification
+
+CLASSIFICATION LABELS
+1.
+ Celebratory Fist Pump
+
+2. High Wave
+
+3. Hand Shake
+
+4. Fist Bump
+
+5. Low Wave
+
+6. Point
+
+9. Motion Over
+
+10. High Five
+
+11. Applause/Clap
