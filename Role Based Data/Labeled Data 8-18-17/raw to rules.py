@@ -1,7 +1,7 @@
 from __future__ import print_function
 
 from subprocess import check_call
-import pydot
+#import pydot
 #import pydotplus
 import weka.core.jvm as jvm
 
@@ -9,12 +9,16 @@ from weka.classifiers import Classifier
 
 import time
 
+import itertools
+
 from weka.core.converters import Loader
 
 
 import StringIO
 
 import traceback
+
+from sys import platform
 
 from weka.core.classes import Random
 
@@ -65,7 +69,7 @@ import operator
 
 import random
 
-from pcapng import FileScanner
+#from pcapng import FileScanner
 
 ##from pycopkmeans import *
 ##from constrained_kmeans import *
@@ -279,30 +283,31 @@ def plot_confusion_matrix(cm, classes,
     This function prints and plots the confusion matrix.
     Normalization can be applied by setting `normalize=True`.
     """
-    plt.imshow(cm, interpolation='nearest', cmap=cmap)
-    plt.title(title)
-    plt.colorbar()
-    tick_marks = np.arange(len(classes))
-    plt.xticks(tick_marks, classes, rotation=90)
-    plt.yticks(tick_marks, classes)
-
     if normalize:
         cm = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
         print("Normalized confusion matrix")
     else:
         print('Confusion matrix, without normalization')
 
-    np.set_printoptions(precision=2)
-    cm = np.around(cm, decimals=2)
     print(cm)
 
-    #thresh = cm.max() / 2.
-    #for i, j in itertools.product(range(cm.shape[0]), range(cm.shape[1])):
-    #    plt.text(j, i, cm[i, j],                 horizontalalignment="center",                 color="white" if cm[i, j] > thresh else "black")
+    plt.imshow(cm, interpolation='nearest', cmap=cmap)
+    plt.title(title)
+    plt.colorbar()
+    tick_marks = np.arange(len(classes))
+    plt.xticks(tick_marks, classes, rotation=45)
+    plt.yticks(tick_marks, classes)
 
-    plt.tight_layout()
+    fmt = '.2f' if normalize else 'd'
+    thresh = cm.max() / 2.
+    for i, j in itertools.product(range(cm.shape[0]), range(cm.shape[1])):
+        plt.text(j, i, format(cm[i, j], fmt),
+                 horizontalalignment="center",
+                 color="white" if cm[i, j] > thresh else "black")
+
     plt.ylabel('True label')
     plt.xlabel('Predicted label')
+    plt.tight_layout()
 
 
         
@@ -318,6 +323,14 @@ col_z = 3
 col_user = 9
 col_class = 12
 win_start = 1
+
+
+if platform == 'win32':
+    pathSep = "\\"
+    pathSepD = "\\"
+else:
+    pathSep = "/"
+    pathSepD = "/"
 
 #user_start = 100104
 #user_end = 100111
@@ -346,7 +359,7 @@ twin_start = win_start
 for a in range(a1,window_size+1):
     for b in range(a2,shift_amount+1):
         #output_file = "out\win_" + str(a) + "_shift_" + str(b) + "_user_" + str(user) + ".csv"       
-        output_file = "output\win_" + str(a) + "_shift_" + str(b) + ".csv"       
+        output_file = "output" + pathSep + "win_" + str(a) + "_shift_" + str(b) + ".csv"       
         o = open( output_file, 'wt' )
         
         for input_file in glob.glob('*.csv'): 
@@ -393,7 +406,7 @@ result = result[:,2:len(result[0])]
 
 out, labels, users = calculateFeatures(result)
 
-output_file = "output\\features_" + "win_" + str(a) + "_shift_" + str(b) + ".csv"
+output_file = "output" + pathSepD + "features_" + "win_" + str(a) + "_shift_" + str(b) + ".csv"
 input_file =  "features_" + "win_" + str(a) + "_shift_" + str(b) + ".csv"
 o = open( output_file, 'wt' )
     
@@ -420,7 +433,7 @@ print (input_file)
 org = input_file.rpartition('.')[0]
 
 #input_file = org
-X=np.array(list(csv.reader((line.replace('\0','') for line in open(os.getcwd() + "\\" + input_folder + "\\" + input_file, "rb")), delimiter="," )))
+X=np.array(list(csv.reader((line.replace('\0','') for line in open(os.getcwd() + pathSepD + input_folder + pathSepD + input_file, "rb")), delimiter="," )))
 
 X1 = np.array(list([X[X[:,len(X[0])-2]==k] for k in np.unique(X[:,len(X[0])-2])]))
 
@@ -1004,7 +1017,7 @@ plot_confusion_matrix(cnf_matrix, classes=[], normalize=False,                  
 
 ######################################## To Flat File #####################################################################
 
-output_file = "output\\flat_" + str(window_size) + "_shift_" + str(shift_amount) + ".csv"       
+output_file = "output" + pathSepD + "flat_" + str(window_size) + "_shift_" + str(shift_amount) + ".csv"       
 o = open( output_file, 'wt' )
 
 results = np.column_stack((true_time,true_user))
@@ -1054,13 +1067,13 @@ shift_amount_seconds = int((shift_amount / 64.0) * 1000)
 
 org = input_file.rpartition('.')[0]
 
-output_file = "output\\" + "pre_" + input_file
+output_file = "output" + pathSepD + "pre_" + input_file
 
 
-X=np.array(list(csv.reader((line.replace('\0','') for line in open(os.getcwd() + "\\" + input_folder + "\\" + input_file, "rb")), delimiter="," )))
+X=np.array(list(csv.reader((line.replace('\0','') for line in open(os.getcwd() + pathSepD + input_folder + pathSepD + input_file, "rb")), delimiter="," )))
 
 
-Y=np.array(list(csv.reader((line.replace('\0','') for line in open(os.getcwd() + "\\" + input_folder + "\\" + input_file_app, "rb")), delimiter="," )))
+Y=np.array(list(csv.reader((line.replace('\0','') for line in open(os.getcwd() + pathSepD + input_folder + pathSepD + input_file_app, "rb")), delimiter="," )))
 Y = np.delete(Y, (0), axis=0)
 
 
@@ -1163,7 +1176,7 @@ plot_confusion_matrix(cnf_matrix, classes=[], normalize=False,                  
 
 ######################################### Flat File Mod ###################################
 
-output_file2 = "output\\flat_" + str(window_size) + "_shift_" + str(shift_amount) + "_mod.csv"       
+output_file2 = "output" + pathSepD + "flat_" + str(window_size) + "_shift_" + str(shift_amount) + "_mod.csv"       
 o = open( output_file2, 'wt' )
 
 
@@ -1227,7 +1240,7 @@ while (a < len_x):
 o.close()
 
 
-Z=np.array(list(csv.reader((line.replace('\0','') for line in open(os.getcwd() + "\\" + input_folder + "\\" + "pre_" + input_file, "rb")), delimiter="," )))
+Z=np.array(list(csv.reader((line.replace('\0','') for line in open(os.getcwd() + pathSepD + input_folder + pathSepD + "pre_" + input_file, "rb")), delimiter="," )))
 
 
 ########################## CALCULATE DURATION RANGES ##################
@@ -1835,7 +1848,7 @@ for a in range(25):
 a = 0
 len_z = len(Z)
 
-output_file = "output\\" + "sequence_" + input_file
+output_file = "output" + pathSepD + "sequence_" + input_file
 
 o = open( output_file, 'wt' )
 
@@ -2077,19 +2090,19 @@ out = "tree"
 dot = out + ".dot"
 png = out + ".png"
 
-out = tree.export_graphviz(clf, out_file=dot)
+#out = tree.export_graphviz(clf, out_file=dot)
 
-dotfile = StringIO.StringIO()
-os.environ["PATH"] += os.pathsep + 'C:/Program Files (x86)/Graphviz2.38/bin/'
-
-
-tree.export_graphviz(clf, out_file=dotfile)
+#dotfile = StringIO.StringIO()
+#os.environ["PATH"] += os.pathsep + 'C:/Program Files (x86)/Graphviz2.38/bin/'
 
 
+#tree.export_graphviz(clf, out_file=dotfile)
 
-check_call(['dot','-Tpng',dot,'-o',png])
 
-(graph,)=pydot.graph_from_dot_data(dotfile.getvalue())
+
+#check_call(['dot','-Tpng',dot,'-o',png])
+
+#(graph,)=pydot.graph_from_dot_data(dotfile.getvalue())
 #graph.write_png("dtree.png")
 
 
@@ -2098,7 +2111,7 @@ try:
     print("Using JRip's Java API to access rules")
     
     loader = Loader("weka.core.converters.CSVLoader")
-    labor_data = loader.load_file(os.getcwd() + "\\" + output_file)
+    labor_data = loader.load_file(os.getcwd() + pathSepD + output_file)
     labor_data.delete_attribute(30)
     labor_data.class_is_last()
     labor_data.randomize(Random(time.time()))
