@@ -429,245 +429,72 @@ o.close()
 
 print ("Beginning Feature Analysis! This may take a few minutes!") 
 
-
-## STILL GOOD HERE ###
-
 ###############################  K-means ###################
 
-#input_file = "features_win_128_shift_64.csv" ################# INSERT FEATURE EXTRACTED CSV FILE HERE!!!!! ######
 input_folder = "output" ################# INSERT FEATURE EXTRACTED CSV FILE HERE!!!!! ######
 print ("************************")
 print (input_file)
 org = input_file.rpartition('.')[0]
 
-#input_file = org
 X=np.array(list(csv.reader((line.replace('\0','') for line in open(os.getcwd() + pathSepD + input_folder + pathSepD + input_file, "rb")), delimiter="," )))
 
 X1 = np.array(list([X[X[:,len(X[0])-2]==k] for k in np.unique(X[:,len(X[0])-2])]))
-
-
-
-    
-#X1 = np.delete(X1, len(X1[0][0])-1, 2)
-#X1 = np.delete(X1, len(X1[0][0])-1, 2)
-#X1 = X1.astype(np.float)
-#X1 = preprocessing.scale(X1)
-
-#print (X1)
     
 true_user = []
 true_time = []
 
-n_cluster_eyes = 5
-n_cluster_flashlight = 5
-n_cluster_high_wave = 5
-n_cluster_shoulder_radio = 6
-n_cluster_take_bp = 4
-n_cluster_whistle = 6
-n_cluster_transition = 5
-n_cluster_none = 1
+n_cluster_ = {'Flashlight' : 5, 'None' : 1, 'Shoulder Radio' : 6, 'Transition' : 5, 'Whistle' : 6, 'Examine Eyes' : 5, 'High Wave' : 5, 'Take BP' : 4}
 
-n_max_activities = 40
+yon = raw_input('Limit number of supports? Y or N: ')
+    
+if (yon.lower() == "y"):
+    n_max_activities = int(raw_input('Maximum number of supports: '))
+else:
+    n_max_activities = -1    
 
+X_ = {}
+Y_ = {}
+U_ = {}
+T_ = {}
 
-X_eyes = []
-Y_eyes = []
-U_eyes = []
-T_eyes = []
-
-X_flash = []
-Y_flash = []
-U_flash = []
-T_flash = []
-
-X_wave = []
-Y_wave = []
-U_wave = []
-T_wave = []
-
-X_radio = []
-Y_radio = []
-U_radio = []
-T_radio = []
-
-X_bp = []
-Y_bp = []
-U_bp = []
-T_bp = []
-
-X_whistle = []
-Y_whistle = []
-U_whistle = []
-T_whistle = []
-
-X_transition = []
-Y_transition = []
-U_transition = []
-T_transition = []
-
-X_none = []
-Y_none = []
-U_none = []
-T_none = []
+include_label_bools = {}
 
 for a in range(len(X1)):
-    if ('Eyes' in X1[a][0][len(X1[a][0])-2]):
-        X_eyes = X1[a][:,2:len(X1[a][0])]
-        true_time.append(X1[a][:,0:2])
-#==============================================================================
-#         if (len(X_eyes) > n_max_activities):
-#             np.random.shuffle(X_eyes)
-#             X_eyes = X_eyes[0:n_max_activities]   
-#==============================================================================
+    label = X1[a][0][len(X1[a][0])-2].lstrip()
+    
+    if (n_max_activities > -1 and n_max_activities < len(X1[a])):
+        X1[a] = np.delete(X1[a], s_[n_max_activities:len(X1[a])], 0)
+    
+    if ('None' in label):
+        yon = 'y'
+    else:
+        yon = raw_input('Include label ' + label + '? Y or N: ')
+    
+    if (yon.lower() == "y"):
+        include_label_bools[label] = True
+    else:
+        include_label_bools[label] = False
+    
+    X_[label] = X1[a][:,2:len(X1[a][0])]
+    true_time.append(X1[a][:,0:2])
+    
+##==============================================================================
+##         if (len(X_eyes) > n_max_activities):
+##             np.random.shuffle(X_eyes)
+##             X_eyes = X_eyes[0:n_max_activities]   
+##==============================================================================
+    
+    true_user.append(X_[label][:,len(X_[label][0])-1])        
         
-        true_user.append(X_eyes[:,len(X_eyes[0])-1])
-        
-        
-        T_eyes = X1[a][:,0:2]
-        U_eyes = X1[a][:,len(X1[a][0])-1]
-        
-        
-        
-        
-        X_eyes = np.delete(X_eyes, len(X_eyes[0])-1, 1)
-        X_eyes = np.delete(X_eyes, len(X_eyes[0])-1, 1)
-        X_eyes = X_eyes.astype(np.float)
-        X_eyes = preprocessing.scale(X_eyes)
-        Y_eyes = KMeans(n_clusters=n_cluster_eyes, random_state=0).fit(X_eyes).predict(X_eyes)
-        pass
-    if ('Flash' in X1[a][0][len(X1[a][0])-2]):
-        X_flash = X1[a][:,2:len(X1[a][0])]
-        true_time.append(X1[a][:,0:2])
-        T_flash = X1[a][:,0:2]
-        U_flash = X1[a][:,len(X1[a][0])-1]
-        
-#==============================================================================
-#         if (len(X_flash) > n_max_activities):            
-#             np.random.shuffle(X_flash)            
-#             X_flash = X_flash[0:n_max_activities]   
-#==============================================================================
-            
-        true_user.append(X_flash[:,len(X_flash[0])-1])
-        X_flash = np.delete(X_flash, len(X_flash[0])-1, 1)
-        X_flash = np.delete(X_flash, len(X_flash[0])-1, 1)
-        X_flash = X_flash.astype(np.float)
-        X_flash = preprocessing.scale(X_flash)
-        Y_flash = KMeans(n_clusters=n_cluster_flashlight, random_state=0).fit(X_flash).predict(X_flash)
-        pass
-    if ('Wave' in X1[a][0][len(X1[a][0])-2]):
-        X_wave = X1[a][:,2:len(X1[a][0])]
-        true_time.append(X1[a][:,0:2])
-        T_wave = X1[a][:,0:2]
-        U_wave = X1[a][:,len(X1[a][0])-1]
-#==============================================================================
-#         if (len(X_wave) > n_max_activities):
-#             np.random.shuffle(X_wave)
-#             X_wave = X_wave[0:n_max_activities]   
-#==============================================================================
-            
-        true_user.append(X_wave[:,len(X_wave[0])-1])
-        X_wave = np.delete(X_wave, len(X_wave[0])-1, 1)
-        X_wave = np.delete(X_wave, len(X_wave[0])-1, 1)
-        X_wave = X_wave.astype(np.float)
-        X_wave = preprocessing.scale(X_wave)
-        Y_wave = KMeans(n_clusters=n_cluster_high_wave, random_state=0).fit(X_wave).predict(X_wave)
-        pass
-    if ('Radio' in X1[a][0][len(X1[a][0])-2]):
-        X_radio = X1[a][:,2:len(X1[a][0])]
-        true_time.append(X1[a][:,0:2])
-        T_radio = X1[a][:,0:2]
-        U_radio = X1[a][:,len(X1[a][0])-1]
-#==============================================================================
-#         if (len(X_radio) > n_max_activities):
-#             np.random.shuffle(X_radio)
-#             X_radio = X_radio[0:n_max_activities]   
-#==============================================================================
-            
-            
-        true_user.append(X_radio[:,len(X_radio[0])-1])
-        X_radio = np.delete(X_radio, len(X_radio[0])-1, 1)
-        X_radio = np.delete(X_radio, len(X_radio[0])-1, 1)
-        X_radio = X_radio.astype(np.float)
-        X_radio = preprocessing.scale(X_radio)
-        Y_radio = KMeans(n_clusters=n_cluster_shoulder_radio, random_state=0).fit(X_radio).predict(X_radio)
-        pass
-    if ('BP' in X1[a][0][len(X1[a][0])-2]):
-        X_bp = X1[a][:,2:len(X1[a][0])]
-        true_time.append(X1[a][:,0:2])
-        T_bp = X1[a][:,0:2]
-        U_bp = X1[a][:,len(X1[a][0])-1]
-#==============================================================================
-#         if (len(X_bp) > n_max_activities):
-#             np.random.shuffle(X_bp)
-#             X_bp = X_bp[0:n_max_activities]   
-#==============================================================================
-            
-            
-        true_user.append(X_bp[:,len(X_bp[0])-1])
-        X_bp = np.delete(X_bp, len(X_bp[0])-1, 1)
-        X_bp = np.delete(X_bp, len(X_bp[0])-1, 1)
-        X_bp = X_bp.astype(np.float)
-        X_bp = preprocessing.scale(X_bp)
-        Y_bp = KMeans(n_clusters=n_cluster_take_bp, random_state=0).fit(X_bp).predict(X_bp)
-        pass
-    if ('Whistle' in X1[a][0][len(X1[a][0])-2]):
-        X_whistle = X1[a][:,2:len(X1[a][0])]
-        true_time.append(X1[a][:,0:2])
-        T_whistle = X1[a][:,0:2]
-        U_whistle = X1[a][:,len(X1[a][0])-1]
-#==============================================================================
-#         if (len(X_whistle) > n_max_activities):
-#             np.random.shuffle(X_whistle)
-#             X_whistle = X_whistle[0:n_max_activities]   
-#==============================================================================
-            
-            
-        true_user.append(X_whistle[:,len(X_whistle[0])-1])
-        X_whistle = np.delete(X_whistle, len(X_whistle[0])-1, 1)
-        X_whistle = np.delete(X_whistle, len(X_whistle[0])-1, 1)
-        X_whistle = X_whistle.astype(np.float)
-        X_whistle = preprocessing.scale(X_whistle)
-        Y_whistle = KMeans(n_clusters=n_cluster_whistle, random_state=0).fit(X_whistle).predict(X_whistle)
-        pass
-    if ('None' in X1[a][0][len(X1[a][0])-2]):
-        X_none = X1[a][:,2:len(X1[a][0])]
-        true_time.append(X1[a][:,0:2])
-        T_none = X1[a][:,0:2]
-        U_none = X1[a][:,len(X1[a][0])-1]
-#==============================================================================
-#         if (len(X_none) > n_max_activities):
-#            np.random.shuffle(X_none)
-#            X_none = X_none[0:n_max_activities]   
-#==============================================================================
-            
-            
-        true_user.append(X_none[:,len(X_none[0])-1])
-        X_none = np.delete(X_none, len(X_none[0])-1, 1)
-        X_none = np.delete(X_none, len(X_none[0])-1, 1)
-        X_none = X_none.astype(np.float)
-        X_none = preprocessing.scale(X_none)
-        Y_none = KMeans(n_clusters=n_cluster_none, random_state=0).fit(X_none).predict(X_none)
-        pass
-    if ('Transition' in X1[a][0][len(X1[a][0])-2]):
-        X_transition = X1[a][:,2:len(X1[a][0])]
-        true_time.append(X1[a][:,0:2])
-        T_transition = X1[a][:,0:2]
-        U_transition = X1[a][:,len(X1[a][0])-1]
-        
-#==============================================================================
-#         if (len(X_transition) > n_max_activities):
-#             np.random.shuffle(X_transition)
-#             X_transition = X_transition[0:n_max_activities]   
-#==============================================================================
-            
-        true_user.append(X_transition[:,len(X_transition[0])-1])
-        X_transition = np.delete(X_transition, len(X_transition[0])-1, 1)
-        X_transition = np.delete(X_transition, len(X_transition[0])-1, 1)
-        X_transition = X_transition.astype(np.float)
-        X_transition = preprocessing.scale(X_transition)
-        Y_transition = KMeans(n_clusters=n_cluster_transition, random_state=0).fit(X_transition).predict(X_transition)
-        pass
-
+    T_[label] = X1[a][:,0:2]
+    U_[label] = X1[a][:,len(X1[a][0])-1]
+    
+    X_[label] = np.delete(X_[label], len(X_[label][0])-1, 1)
+    X_[label] = np.delete(X_[label], len(X_[label][0])-1, 1)
+    X_[label] = X_[label].astype(np.float)
+    X_[label] = preprocessing.scale(X_[label])
+    Y_[label] = KMeans(n_clusters=n_cluster_[label], random_state=0).fit(X_[label]).predict(X_[label])
+    
 X = []
 Y = []
 T = []
@@ -675,130 +502,22 @@ U = []
 
 ############################ Unlabel Activities ##########################
 
+none_offset = n_cluster_['None'] + 1
 
-flash = True
-
-radio = True
-bp = True
-whistle = True
-transition = True
-
-eyes = True
-wave = True
-
-
-none_offset = n_cluster_none + 1
-
-
-if (len(Y_eyes) > 0):
-    Y_eyes = map(str, Y_eyes)
-    for a in range(len(Y_eyes)):
-        if (eyes):
-            Y_eyes[a] = "Examine Eyes " + str(Y_eyes[a])
+for key in list(Y_):
+    Y_[key] = map(str, Y_[key])
+    for a in range(len(Y_[key])):
+        if (include_label_bools[key]):
+            Y_[key][a] = key + " " + str(Y_[key][a])
         else:
-            Y_eyes[a] = "None " + str(int(Y_eyes[a]) + none_offset)
-    if not (eyes):
-        none_offset = none_offset + n_cluster_eyes + 1
-    X.append(X_eyes)
-    Y.append(Y_eyes)
-    T.append(T_eyes)
-    U.append(U_eyes)
+            Y_[key][a] = "None " + str(int(Y_[key][a]) + none_offset)
+    if not (include_label_bools[key]):
+        none_offset = none_offset + n_cluster_[key] + 1
+    X.append(X_[key])
+    Y.append(Y_[key])
+    T.append(T_[key])
+    U.append(U_[key])
     
-        
-
-if (len(Y_flash) > 0):
-    Y_flash = map(str, Y_flash)
-    for a in range(len(Y_flash)):
-        if (flash):
-            Y_flash[a] = "Flashlight " + str(Y_flash[a])
-        else:
-            Y_flash[a] = "None " + str(int(Y_flash[a]) + none_offset)
-    if not (flash):
-        none_offset = none_offset + n_cluster_flashlight + 1
-    X.append(X_flash)
-    Y.append(Y_flash)
-    T.append(T_flash)
-    U.append(U_flash)
-
-if (len(Y_wave) > 0):
-    Y_wave = map(str, Y_wave)
-    for a in range(len(Y_wave)):
-        if (wave):
-            Y_wave[a] = "High Wave " + str(Y_wave[a])
-        else:
-            Y_wave[a] = "None " + str(int(Y_wave[a]) + none_offset)
-    if not (wave):
-        none_offset = none_offset + n_cluster_high_wave + 1
-    X.append(X_wave)
-    Y.append(Y_wave)
-    T.append(T_wave)
-    U.append(U_wave)
-
-if (len(Y_radio) > 0):
-    Y_radio = map(str, Y_radio)
-    for a in range(len(Y_radio)):
-        if (radio):
-            Y_radio[a] = "Shoulder Radio " + str(Y_radio[a])
-        else:
-            Y_radio[a] = "None " + str(int(Y_radio[a]) + none_offset)
-    if not (radio):
-        none_offset = none_offset + n_cluster_shoulder_radio + 1
-    X.append(X_radio)
-    Y.append(Y_radio)
-    T.append(T_radio)
-    U.append(U_radio)
-
-if (len(Y_bp) > 0):
-    Y_bp = map(str, Y_bp)
-    for a in range(len(Y_bp)):
-        if (bp):
-            Y_bp[a] = "Take BP " + str(Y_bp[a])
-        else:
-            Y_bp[a] = "None " + str(int(Y_bp[a]) + none_offset)
-    if not (bp):
-        none_offset = none_offset + n_cluster_take_bp + 1
-    X.append(X_bp)
-    Y.append(Y_bp)
-    T.append(T_bp)
-    U.append(U_bp)
-
-if (len(Y_whistle) > 0):
-    Y_whistle = map(str, Y_whistle)
-    for a in range(len(Y_whistle)):
-        if (whistle):
-            Y_whistle[a] = "Whistle " + str(Y_whistle[a])
-        else:
-            Y_whistle[a] = "None " + str(int(Y_whistle[a]) + none_offset)
-    if not (whistle):
-        none_offset = none_offset + n_cluster_whistle + 1
-    X.append(X_whistle)
-    Y.append(Y_whistle)
-    T.append(T_whistle)
-    U.append(U_whistle)
-    
-if (len(Y_transition) > 0):
-    Y_transition = map(str, Y_transition)
-    for a in range(len(Y_transition)):
-        if (transition):
-            Y_transition[a] = "Transition " + str(Y_transition[a])
-        else:
-            Y_transition[a] = "None " + str(int(Y_transition[a]) + none_offset)
-    if not (transition):
-        none_offset = none_offset + n_cluster_transition + 1
-    X.append(X_transition)
-    Y.append(Y_transition)
-    T.append(T_transition)
-    U.append(U_transition)
-    
-if (len(Y_none) > 0):
-    Y_none = map(str, Y_none)
-    for a in range(len(Y_none)):
-        Y_none[a] = "None " + str(Y_none[a])
-    X.append(X_none)
-    Y.append(Y_none)
-    T.append(T_none)
-    U.append(U_none)
-
 #==============================================================================
 # # k means determine k
 # distortions = []
@@ -823,8 +542,7 @@ T2 = np.array(true_time)
 if (len(X2) > 1):
     X = np.vstack((X2[0],X2[1]))
 for a in range(2, len(X2)):
-    X = np.vstack((X,X2[a]))
-    
+    X = np.vstack((X,X2[a]))    
     
 
 #==============================================================================
@@ -836,7 +554,6 @@ for a in range(2, len(X2)):
     
 true_time = [item for sublist in true_time for item in sublist]
 true_time = np.array(true_time)    
-
 
 
 Y = [item for sublist in Y for item in sublist]
@@ -947,63 +664,16 @@ allPredictions = np.concatenate(allPredictions)
 allClassifications = np.concatenate(allClassifications) 
 
 for a in range(len(allPredictions)):
-    if ('None' in allPredictions[a]):
-        allPredictions[a] = 'None'
-        pass
-    if ('Eyes' in allPredictions[a]):
-        allPredictions[a] = 'Examine Eyes'
-        pass
-    if ('Flash' in allPredictions[a]):
-        allPredictions[a] = 'Flashlight'
-        pass
-    if ('Wave' in allPredictions[a]):
-        allPredictions[a] = 'High Wave'
-        pass
-    if ('Radio' in allPredictions[a]):
-        allPredictions[a] = 'Shoulder Radio'
-        pass
-    if ('BP' in allPredictions[a]):
-        allPredictions[a] = 'Take BP'
-        pass
-    if ('Whistle' in allPredictions[a]):
-        allPredictions[a] = 'Whistle'
-        pass
-    if ('Transition' in allPredictions[a]):
-        allPredictions[a] = 'Transition'
-        pass
-    if ('None' in allPredictions[a]):
-        allPredictions[a] = 'None'
-        pass
-
+    for key in list(include_label_bools):
+        if (key in allPredictions[a]):
+            allPredictions[a] = key
+            break
+    
 for a in range(len(allClassifications)):
-    if ('None' in allClassifications[a]):
-        allClassifications[a] = 'None'
-        pass
-    if ('Eyes' in allClassifications[a]):
-        allClassifications[a] = 'Examine Eyes'
-        pass
-    if ('Flash' in allClassifications[a]):
-        allClassifications[a] = 'Flashlight'
-        pass
-    if ('Wave' in allClassifications[a]):
-        allClassifications[a] = 'High Wave'
-        pass
-    if ('Radio' in allClassifications[a]):
-        allClassifications[a] = 'Shoulder Radio'
-        pass
-    if ('BP' in allClassifications[a]):
-        allClassifications[a] = 'Take BP'
-        pass
-    if ('Whistle' in allClassifications[a]):
-        allClassifications[a] = 'Whistle'
-        pass
-    if ('Transition' in allClassifications[a]):
-        allClassifications[a] = 'Transition'
-        pass
-    if ('None' in allClassifications[a]):
-        allClassifications[a] = 'None'
-        pass
-  
+    for key in list(include_label_bools):
+        if (key in allClassifications[a]):
+            allClassifications[a] = key
+            break
    
 print ('Get Results')
 
@@ -1011,10 +681,8 @@ print(classification_report(allClassifications,allPredictions))
 
 print("Accuracy: " + ("%.6f"%accuracy_score(allClassifications,allPredictions)))
 
-
 cnf_matrix = confusion_matrix(allClassifications,allPredictions)
 
 np.set_printoptions(threshold='nan')
-
 
 plot_confusion_matrix(cnf_matrix, classes=[], normalize=True, title='Normalized confusion matrix')
