@@ -443,7 +443,8 @@ X1 = np.array(list([X[X[:,len(X[0])-2]==k] for k in np.unique(X[:,len(X[0])-2])]
 true_user = []
 true_time = []
 
-n_cluster_ = {'Flashlight' : 5, 'None' : 1, 'Shoulder Radio' : 6, 'Transition' : 5, 'Whistle' : 6, 'Examine Eyes' : 5, 'High Wave' : 5, 'Take BP' : 4}
+#n_cluster_ = {'Flashlight' : 5, 'None' : 1, 'Shoulder Radio' : 6, 'Transition' : 5, 'Whistle' : 6, 'Examine Eyes' : 5, 'High Wave' : 5, 'Take BP' : 4}
+n_cluster_ = {}
 
 yon = raw_input('Limit number of supports? Y or N: ')
     
@@ -493,7 +494,28 @@ for a in range(len(X1)):
     X_[label] = np.delete(X_[label], len(X_[label][0])-1, 1)
     X_[label] = X_[label].astype(np.float)
     X_[label] = preprocessing.scale(X_[label])
-    Y_[label] = KMeans(n_clusters=n_cluster_[label], random_state=0).fit(X_[label]).predict(X_[label])
+    
+    #Determine Number of Clusters Here
+    opt_n = 1
+    max_val = -1
+    for n in range (2,10):
+        # Initialize the clusterer with n_clusters value and a random generator
+        # seed of 10 for reproducibility.
+        clusterer = KMeans(n_clusters=n)
+        cluster_labels = clusterer.fit_predict(X_[label])
+    
+        # The silhouette_score gives the average value for all the samples.
+        # This gives a perspective into the density and separation of the formed
+        # clusters
+        silhouette_avg = silhouette_score(X_[label], cluster_labels)
+        #print("For n_clusters = ", n, ", The average silhouette_score is :", silhouette_avg)
+        
+        if (max(max_val, silhouette_avg) > max_val):
+            opt_n = n
+            max_val = silhouette_avg
+    
+    n_cluster_[label] = opt_n
+    Y_[label] = KMeans(n_clusters=n_cluster_[label]).fit(X_[label]).predict(X_[label])
     
 X = []
 Y = []
@@ -502,7 +524,10 @@ U = []
 
 ############################ Unlabel Activities ##########################
 
-none_offset = n_cluster_['None'] + 1
+if 'None' in n_cluster_.keys():
+    none_offset = n_cluster_['None'] + 1
+else:
+    none_offset =  1
 
 for key in list(Y_):
     Y_[key] = map(str, Y_[key])
