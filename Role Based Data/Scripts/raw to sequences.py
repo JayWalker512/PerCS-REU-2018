@@ -690,13 +690,13 @@ allClassifications = np.concatenate(allClassifications)
 
 for a in range(len(allPredictions)):
     for key in list(include_label_bools):
-        if (key in allPredictions[a]):
+        if (key in allPredictions[a] and len(allPredictions[a].split()) - 1 == len(key.split())):
             allPredictions[a] = key
             break
     
 for a in range(len(allClassifications)):
     for key in list(include_label_bools):
-        if (key in allClassifications[a]):
+        if (key in allClassifications[a] and len(allClassifications[a].split()) - 1 == len(key.split())):
             allClassifications[a] = key
             break
    
