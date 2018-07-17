@@ -1597,7 +1597,7 @@ while (a < len_z):
 
 ######################### Calculate Distance Magnitude #######################################
 for a in range(len(arr)):
-    if ("0" in arr[a][1]["Walking"]): #if walking
+    if ("0" in arr[a][1]["Walking"]): #if not walking
         arr[a][1]["Distance Magnitude"] = str(random.uniform(0.0, 3.0))
     else:
         seq_start = 4687389847 # Some Date in 2118
