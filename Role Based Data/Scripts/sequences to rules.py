@@ -136,7 +136,8 @@ try:
     
     loader = Loader("weka.core.converters.CSVLoader")
     labor_data = loader.load_file(input_seq_file)
-    labor_data.delete_attribute(labor_data.num_attributes - 2) #Delete User Numbers
+    labor_data.delete_attribute(labor_data.num_attributes - 3) #Delete User Numbers
+    labor_data.delete_attribute(labor_data.num_attributes - 2) #Delete Attack types
     labor_data.class_is_last()
     labor_data.randomize(Random(time.time()))
     
@@ -152,10 +153,23 @@ try:
     print(evaluation.class_details())
     print(evaluation.matrix())
     
+    classes = []
+    
+    s = evaluation.matrix().split("\n")
+    
+    for a in range(len(s)):
+        if "=" in s[a] and "|" in s[a]:
+            ss = s[a].split("=")
+            classes.append(ss[len(ss)-1].lstrip())            
+        pass
+    
+
+    #print (classes[0])
+    
     
     #print("confusionMatrix: " + str(evaluation.confusion_matrix))
     
-    plot_confusion_matrix(evaluation.confusion_matrix, classes=["Normal", "Abnormal"], normalize=True, title='Normalized confusion matrix')    
+    plot_confusion_matrix(evaluation.confusion_matrix, classes=classes, normalize=True, title='Normalized confusion matrix')    
     
     
     for i in xrange(rset.size()):
