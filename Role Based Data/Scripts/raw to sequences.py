@@ -3,15 +3,15 @@ from __future__ import print_function
 from subprocess import check_call
 #import pydot
 #import pydotplus
-import weka.core.jvm as jvm
+#import weka.core.jvm as jvm
 
-from weka.classifiers import *
+#from weka.classifiers import *
 
 import time
 
 import itertools
 
-from weka.core.converters import Loader
+#from weka.core.converters import Loader
 
 
 import StringIO
@@ -20,7 +20,7 @@ import traceback
 
 from sys import platform
 
-from weka.core.classes import Random
+#from weka.core.classes import Random
 
 import os
 import csv

@@ -1,0 +1,9 @@
+*.pyc
+bin
+lib
+include
+local
+output
+share
+venv
+virtualenv
