@@ -1,4 +1,3 @@
-
 from numpy import genfromtxt
 from sklearn.metrics import confusion_matrix
 from sklearn.cross_validation import KFold
@@ -40,14 +39,14 @@ def plot_confusion_matrix(df_confusion, title='Confusion matrix', cmap=plt.cm.gr
     plt.colorbar()
     tick_marks = n.arange(len(df_confusion.columns))
     plt.xticks(tick_marks, class_names,  rotation=90)
-    
-    
+
+
     plt.yticks(tick_marks, class_names)
-    
+
     width, height = df_confusion.shape
     n.set_printoptions(precision=2)
 
-    
+
     for x in xrange(width):
         for y in xrange(height):
             if (x != y):
@@ -60,7 +59,7 @@ def plot_confusion_matrix(df_confusion, title='Confusion matrix', cmap=plt.cm.gr
     #savefig("confusion_matrix.png", format="png")
 
     plt.show()
-    
+
 
 
 
@@ -86,17 +85,18 @@ n.set_printoptions(threshold='nan')
 
 output_file = "features_" + path
 o = open( output_file, 'wt' )
-    
+
 
 for b in range (len(features[0])):
     o.write(str(features[0][b]) + ", ")
-o.write("\n")   
+o.write("\n")
 
 o.close()
- 
+
 
 
 # Cross- Validation Schemes
+#This works by splitting the data into some number of consecutive training and test sets
 kf = KFold(len(classifications), 10, shuffle=True)
 loso = LeaveOneLabelOut(patientID)
 
@@ -106,10 +106,10 @@ loso = LeaveOneLabelOut(patientID)
 #clf = LogisticRegression(C=10,penalty='l1', tol=.01)
 
 #clf = KNeighborsClassifier(n_neighbors=3)
-clf = svm.SVC(kernel="linear")
+#clf = svm.SVC(kernel="linear")
 #clf = tree.DecisionTreeClassifier()
 #clf = GaussianNB()
-#clf = RandomForestClassifier(max_depth=35, n_estimators=1000, max_features=15)
+clf = RandomForestClassifier(max_depth=35, n_estimators=1000, max_features=15)
 #clf = AdaBoostClassifier(n_estimators=1000)
 
 
@@ -139,7 +139,7 @@ allPredictions = n.concatenate(allPredictions)
 allClassifications = n.concatenate(allClassifications)
 
 
-    
+
 print(classification_report(allClassifications,allPredictions))
 #print(confMat)
 print("Accuracy: " + ("%.6f"%accuracy_score(allClassifications,allPredictions)))
@@ -153,15 +153,15 @@ print("Accuracy: " + ("%.6f"%accuracy_score(allClassifications,allPredictions)))
 #==============================================================================
 # allClassifications = []
 # allPredictions = []
-# 
+#
 # for i in range(650):
 #     allClassifications.append(i//50)
 #     allPredictions.append(i//50)
-# 
+#
 # allPredictions[150] = 3
 # allPredictions[151] = 3
 # allPredictions[152] = 3
-# 
+#
 # allPredictions[250] = 12
 # allPredictions[251] = 12
 # allPredictions[252] = 12
@@ -170,7 +170,7 @@ print("Accuracy: " + ("%.6f"%accuracy_score(allClassifications,allPredictions)))
 # allPredictions[255] = 12
 # allPredictions[256] = 12
 # allPredictions[257] = 12
-# 
+#
 # allPredictions[300] = 2
 # allPredictions[301] = 2
 # allPredictions[302] = 2
@@ -179,7 +179,7 @@ print("Accuracy: " + ("%.6f"%accuracy_score(allClassifications,allPredictions)))
 # allPredictions[305] = 2
 # allPredictions[306] = 2
 # allPredictions[307] = 2
-# 
+#
 # allPredictions[350] = 12
 # allPredictions[351] = 12
 # allPredictions[352] = 12
@@ -190,14 +190,14 @@ print("Accuracy: " + ("%.6f"%accuracy_score(allClassifications,allPredictions)))
 # allPredictions[357] = 5
 # allPredictions[358] = 5
 # allPredictions[359] = 5
-# 
+#
 # allPredictions[400] = 5
 # allPredictions[401] = 5
 # allPredictions[402] = 5
 # allPredictions[403] = 5
 # allPredictions[404] = 5
 # allPredictions[405] = 5
-# 
+#
 # allPredictions[500] = 3
 # allPredictions[501] = 3
 # allPredictions[502] = 3
@@ -206,10 +206,10 @@ print("Accuracy: " + ("%.6f"%accuracy_score(allClassifications,allPredictions)))
 
 
 
-    
+
 #print (allClassifications)
 
-    
+
 
 
 
