@@ -19,8 +19,7 @@ Dependency Setup
 
 These scripts have numerous dependencies. I'll list commands you can use on Ubuntu to install them below:
 
-sudo apt install python3-numpy
-sudo apt install python3-sklearn
-pip install pandas matplotlib scipy
+* sudo apt install python-tk
+* pip install pandas matplotlib scipy scikit-learn numpy
 
 In 'raw to sequences.py' I commented out the stuff involving weka imports because it doesn't appear to actually be used in the script.
