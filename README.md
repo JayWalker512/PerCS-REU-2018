@@ -10,8 +10,11 @@ primary function which extracts the features is named "main" in 'Gesture Recogni
 'raw to sequences.py' script corresponds to the offline model building framework pictured in 'Figure 2' of the paper. The script
 carries out the window extraction step (3.B in the paper). It then carries out feature extraction 
 described in section 3.C in the paper. It then performs the K-Means data clustering intended for activity-phase recognition 
-described in section 3.D of the paper. Then it carries out the Random Forest activity recognition described in section 3.E.
+described in section 3.D of the paper. Then it carries out the Random Forest activity recognition described in section 3.E. It seems intended
+to be used on a 'packet_user.csv' file in 'Labeled Data' folders. 
 
+
+'inject attack sequences.py' works on data from 'Labeled Data/All Data/Output' folder.
 
 
 Dependency Setup
