@@ -272,11 +272,8 @@ def generateAttackBatteryDrain(amount = 25, p = .5, attackType = "Standard"):
         Y[0].append("Energy Rate")
         ind_y["Energy Rate"] = len(Y[0])-1
         rate_y["Energy Rate"] = rate
-        
-#        Y[0].append("Energy Magnitude")
-#        ind_y["Energy Magnitude"] = len(Y[0])-1    
-#        rate_y["Energy Magnitude"] = 0
     
+        #fill the column with values
         for a in range(1, len(Y)):
             seq_start = 4687389847 # Some Date in 2118
             seq_end = -1
@@ -292,6 +289,25 @@ def generateAttackBatteryDrain(amount = 25, p = .5, attackType = "Standard"):
             Y[a].append(str(r2))    
             #Y[a].append(str(int(((seq_end - seq_start)/1000.0) * r2)))
     
+    #add new column
+    if ("Screen On" not in ind_y):
+        Y[0].append("Screen On")
+        ind_y["Screen On"] = len(Y[0])-1
+        bool_y.append("Screen On")
+        
+        #if "App Usage Count" > 0, "Screen On" should always be true.
+        #Otherwise, apply 1 or 0 in "Screen On" column according to probability p
+        app_usage_count_index = X[0].index("App Usage Count")
+        for b in range(1, len(Y)):
+            if (X[b][app_usage_count_index] == "1"):
+                Y[b].append("1")
+            else:
+                if (random.random() < p):
+                    Y[b].append("1")                        
+                else:
+                    Y[b].append("0")
+                
+    
     generateNormal(amount = int(amount/2), walking = "0", p = p)
     generateNormal(amount = amount - int(amount/2), walking = "1", p = p)
     
@@ -301,6 +317,7 @@ def generateAttackBatteryDrain(amount = 25, p = .5, attackType = "Standard"):
     #doesn't seem to make a difference!
     if ("SleepDeprivation" in attackType):        
         rate = .00433027 #arbitrary rate?
+        #why is the number lower for a battery drain attack than normal scenario?
         
     #iterate backwards and add labels for attack type
     for a in range(len(X)-1,len(X)-1-amount,-1):
