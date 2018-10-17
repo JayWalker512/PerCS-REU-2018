@@ -266,6 +266,7 @@ def generateAttackBatteryDrain(amount = 25, p = .5, attackType = "Standard"):
     global rate_y
     
     rate = (.53171/60)
+    screen_rate = (.25/60)
  
     #add label to the new column
     if ("Energy Rate" not in ind_y):
@@ -290,6 +291,8 @@ def generateAttackBatteryDrain(amount = 25, p = .5, attackType = "Standard"):
             #Y[a].append(str(int(((seq_end - seq_start)/1000.0) * r2)))
     
     #add new column
+    app_usage_count_index = X[0].index("App Usage Count")
+    energy_rate_index = Y[0].index("Energy Rate")
     if ("Screen On" not in ind_y):
         Y[0].append("Screen On")
         ind_y["Screen On"] = len(Y[0])-1
@@ -297,16 +300,23 @@ def generateAttackBatteryDrain(amount = 25, p = .5, attackType = "Standard"):
         
         #if "App Usage Count" > 0, "Screen On" should always be true.
         #Otherwise, apply 1 or 0 in "Screen On" column according to probability p
-        app_usage_count_index = X[0].index("App Usage Count")
         for b in range(1, len(Y)):
+            screen_on = False
             if (X[b][app_usage_count_index] == "1"):
                 Y[b].append("1")
+                screen_on = True
             else:
                 if (random.random() < p):
-                    Y[b].append("1")                        
+                    Y[b].append("1")     
+                    screen_on = True
                 else:
                     Y[b].append("0")
-                
+                    
+            #if we set the screen on, increase the energy rate
+            if (screen_on):
+                #screen_percentage = float(Y[b][energy_rate_index]) * 0.18 #according to my phone
+                #Y[b][energy_rate_index] = str(float(Y[b][energy_rate_index]) - screen_percentage)
+                Y[b][energy_rate_index] = str(float(Y[b][energy_rate_index]) - screen_rate) 
     
     generateNormal(amount = int(amount/2), walking = "0", p = p)
     generateNormal(amount = amount - int(amount/2), walking = "1", p = p)
@@ -332,8 +342,13 @@ def generateAttackBatteryDrain(amount = 25, p = .5, attackType = "Standard"):
             if ("End" in X[0][b]):
                 seq_end = max(seq_end, float(X[a][b]))
                 
-        #add battery drain rate to the appropriate column with some noise
+        #add battery drain rate to the appropriate column with some noise, and adjustment for screen usage
         r2 = random.uniform(rate * .9, rate * 1.1)
+        
+        if (Y[a][ind_y["Screen On"]] == "1"):
+            r2 -= screen_rate
+            #r2 -= r2 * 0.18 #increase consumption 18%
+            
         Y[a][ind_y["Energy Rate"]] = (str(r2))    
         #Y[a][ind_y["Energy Rate"]] = (str(int(((seq_end - seq_start)/1000.0) * r2)))
 
