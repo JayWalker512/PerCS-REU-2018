@@ -16,6 +16,8 @@ import numpy
 from sklearn import preprocessing
 from sklearn.neural_network import MLPClassifier
 from sklearn.neural_network import MLPRegressor
+from sklearn.linear_model import LogisticRegression
+from sklearn.tree import DecisionTreeClassifier
 from sklearn.model_selection import KFold
 
 def getHeaderListFromCSV(filename, delimiter):
@@ -51,6 +53,7 @@ def loadCSV(filename, omitHeader=False):
             
         return rowList
             
+#input a vector of reals and ouput a one-hot vector indicating the max element
 def maxVector(inVector):
     maxIndex = 0
     maxValue = -999999
@@ -67,6 +70,45 @@ def maxVector(inVector):
             
     return inVector
     
+def foldTrainTest(X, Y, classifier, nFolds=10):
+    kf = KFold(n_splits=nFolds, shuffle=True) #maybe try the shuffle param on the activity recognition stuff?
+    correct = 0
+    outOf = 0
+    for train_index, test_index in kf.split(X):
+        Xtrain, Xtest = X[train_index], X[test_index]
+        Ytrain, Ytest = Y[train_index], Y[test_index]
+        outOf += len(Ytest) #average accuracy will be calculated as (correct / outOf)
+        classifier.fit(Xtrain, Ytrain)
+
+        response = classifier.predict(Xtest)
+        for i in range(0,len(Xtest)):
+            if response[i] == Ytest[i]:
+                correct += 1
+            
+    return correct / outOf
+
+def testMLPC(X, Y, nFolds=10):
+    #construct the neural network 
+    numFeatures = len(X[0])
+    #architectureTuple = (numFeatures, int(math.floor((3/4)*numFeatures)), int(math.floor((1/2)*numFeatures)))
+    #architectureTuple = (numFeatures, int(math.floor((3/4)*numFeatures)), int(math.floor((1/2)*numFeatures)), int(math.floor((1/4)*numFeatures)))
+    architectureTuple = (numFeatures * 4)
+    #architectureTuple = (numFeatures * 2, numFeatures, int(math.floor((3/4)*numFeatures)), int(math.floor((1/2)*numFeatures)), int(math.floor((1/4)*numFeatures)))
+    #architectureTuple = (50, 50, 50, 50, 50)
+    #print("Hidden layer sizes: " + str(architectureTuple))
+    #mlp = MLPRegressor(activation='relu', hidden_layer_sizes=architectureTuple, max_iter=1000)
+    mlp = MLPClassifier(activation='relu', hidden_layer_sizes=architectureTuple, max_iter=1000)
+    print("MLPC Accuracy (" + str(nFolds) + "-fold):" + str(foldTrainTest(X, Y, mlp, nFolds)))
+    
+def testLogisticRegression(X, Y, nFolds=10):
+    #construct logisitic regressor for comparison
+    clf = LogisticRegression()
+    print("Logistic Regression Accuracy (" + str(nFolds) + "-fold):" + str(foldTrainTest(X, Y, clf, nFolds)))
+    
+def testDecisionTree(X, Y, nFolds=10):
+    clf = DecisionTreeClassifier()
+    print("Decision Tree Accuracy (" + str(nFolds) + "-fold):" + str(foldTrainTest(X, Y, clf, nFolds)))
+
 def main(argv):
     X = loadCSV(argv[1], omitHeader=True) #load the un-scaled data set with classificatioins
     Xheaders = getHeaderListFromCSV(argv[1], ",")
@@ -86,47 +128,24 @@ def main(argv):
         
     #print(X)
     Xprepared = scaleFeatures(X)
-    #print(Xprepared)
+    #print(Xprepared[0])
     
     #replace Y textual labels with 2-dimensional vector for classifications
     for i in range(0, len(Y)):
         if (Y[i] == "Normal"):
-            Y[i] = [1,0]
+            #Y[i] = [1,0]
+            Y[i] = 0
         else:
-            Y[i] = [0,1]
+            #Y[i] = [0,1]
+            Y[i] = 1
     
     #print(Y)
     Y = numpy.asarray(Y)
     
-    #construct the neural network 
-    numFeatures = len(Xprepared[0])
-    #architectureTuple = (numFeatures, int(math.floor((3/4)*numFeatures)), int(math.floor((1/2)*numFeatures)))
-    architectureTuple = (numFeatures, int(math.floor((3/4)*numFeatures)), int(math.floor((1/2)*numFeatures)), int(math.floor((1/4)*numFeatures)))
-    #architectureTuple = (numFeatures * 2, numFeatures, int(math.floor((3/4)*numFeatures)), int(math.floor((1/2)*numFeatures)), int(math.floor((1/4)*numFeatures)))
-    print("Hidden layer sizes: " + str(architectureTuple))
-    #mlp = MLPRegressor(activation='relu', hidden_layer_sizes=architectureTuple, max_iter=1000)
-    mlp = MLPClassifier(activation='relu', hidden_layer_sizes=architectureTuple, max_iter=1000)
-    
-    #split the training data into k-Folds for training/testing and train on each of them
-    nFolds = 10
-    kf = KFold(n_splits=nFolds)
-    correct = 0
-    outOf = 0
-    for train_index, test_index in kf.split(Xprepared):
-        Xtrain, Xtest = Xprepared[train_index], Xprepared[test_index]
-        Ytrain, Ytest = Y[train_index], Y[test_index]
-        outOf += len(Ytest) #average accuracy will be calculated as (correct / outOf)
-        mlp.fit(Xtrain, Ytrain)
-        
-        response = mlp.predict(Xtest)
-        for i in range(0,len(Xtest)):
-            #response[i] = maxVector(response[i]) #custom output layer activation function
-            #print(response[i])
-            if numpy.equal(response[i], Ytest[i])[0]:
-                correct += 1
-            
-    print("Accuracy (" + str(nFolds) + "-fold):" + str(correct / outOf))
-    
+    testMLPC(Xprepared, Y)
+    testLogisticRegression(Xprepared, Y)
+    #testDecisionTree(Xprepared, Y)
+    testDecisionTree(numpy.asarray(X), Y)
 
 if __name__ == "__main__":
     main(sys.argv)
