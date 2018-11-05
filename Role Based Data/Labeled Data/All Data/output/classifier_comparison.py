@@ -130,7 +130,7 @@ def main(argv):
     Xprepared = scaleFeatures(X)
     #print(Xprepared[0])
     
-    #replace Y textual labels with 2-dimensional vector for classifications
+    #replace Y textual labels with binary labels 
     for i in range(0, len(Y)):
         if (Y[i] == "Normal"):
             #Y[i] = [1,0]
@@ -144,7 +144,6 @@ def main(argv):
     
     testMLPC(Xprepared, Y)
     testLogisticRegression(Xprepared, Y)
-    #testDecisionTree(Xprepared, Y)
     testDecisionTree(numpy.asarray(X), Y)
 
 if __name__ == "__main__":
