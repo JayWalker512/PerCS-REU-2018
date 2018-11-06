@@ -11,8 +11,11 @@ import sys
 import csv
 import io
 import math
+import random
 
 import numpy
+import matplotlib.pyplot as plt
+from sklearn.learning_curve import learning_curve
 from sklearn import preprocessing
 from sklearn.neural_network import MLPClassifier
 from sklearn.neural_network import MLPRegressor
@@ -71,7 +74,7 @@ def maxVector(inVector):
     return inVector
     
 def foldTrainTest(X, Y, classifier, nFolds=10):
-    kf = KFold(n_splits=nFolds, shuffle=True) #maybe try the shuffle param on the activity recognition stuff?
+    kf = KFold(n_splits=nFolds) #maybe try the shuffle param on the activity recognition stuff?
     correct = 0
     outOf = 0
     for train_index, test_index in kf.split(X):
@@ -84,6 +87,8 @@ def foldTrainTest(X, Y, classifier, nFolds=10):
         for i in range(0,len(Xtest)):
             if response[i] == Ytest[i]:
                 correct += 1
+    
+    plotLearningCurve(classifier, classifier.__class__.__name__, X, Y)#, cv=kf.split(X))
             
     return correct / outOf
 
@@ -109,11 +114,74 @@ def testDecisionTree(X, Y, nFolds=10):
     clf = DecisionTreeClassifier()
     print("Decision Tree Accuracy (" + str(nFolds) + "-fold):" + str(foldTrainTest(X, Y, clf, nFolds)))
 
+#this function is essentially verbatim from: http://scikit-learn.org/0.15/auto_examples/plot_learning_curve.html
+def plotLearningCurve(estimator, title, X, y, ylim=None, cv=None,
+                        n_jobs=1, train_sizes=numpy.linspace(.1, 1.0, 5)):
+    """
+    Generate a simple plot of the test and traning learning curve.
+
+    Parameters
+    ----------
+    estimator : object type that implements the "fit" and "predict" methods
+        An object of that type which is cloned for each validation.
+
+    title : string
+        Title for the chart.
+
+    X : array-like, shape (n_samples, n_features)
+        Training vector, where n_samples is the number of samples and
+        n_features is the number of features.
+
+    y : array-like, shape (n_samples) or (n_samples, n_features), optional
+        Target relative to X for classification or regression;
+        None for unsupervised learning.
+
+    ylim : tuple, shape (ymin, ymax), optional
+        Defines minimum and maximum yvalues plotted.
+
+    cv : integer, cross-validation generator, optional
+        If an integer is passed, it is the number of folds (defaults to 3).
+        Specific cross-validation objects can be passed, see
+        sklearn.cross_validation module for the list of possible objects
+
+    n_jobs : integer, optional
+        Number of jobs to run in parallel (default 1).
+    """
+    plt.figure()
+    plt.title(title)
+    if ylim is not None:
+        plt.ylim(*ylim)
+    plt.xlabel("Training examples")
+    plt.ylabel("Score")
+    train_sizes, train_scores, test_scores = learning_curve(
+        estimator, X, y, cv=cv, n_jobs=n_jobs, train_sizes=train_sizes)
+    train_scores_mean = numpy.mean(train_scores, axis=1)
+    train_scores_std = numpy.std(train_scores, axis=1)
+    test_scores_mean = numpy.mean(test_scores, axis=1)
+    test_scores_std = numpy.std(test_scores, axis=1)
+    plt.grid()
+
+    plt.fill_between(train_sizes, train_scores_mean - train_scores_std,
+                     train_scores_mean + train_scores_std, alpha=0.1,
+                     color="r")
+    plt.fill_between(train_sizes, test_scores_mean - test_scores_std,
+                     test_scores_mean + test_scores_std, alpha=0.1, color="g")
+    plt.plot(train_sizes, train_scores_mean, 'o-', color="r",
+             label="Training score")
+    plt.plot(train_sizes, test_scores_mean, 'o-', color="g",
+             label="Cross-validation score")
+
+    plt.legend(loc="best")
+    return plt
+
 def main(argv):
     X = loadCSV(argv[1], omitHeader=True) #load the un-scaled data set with classificatioins
     Xheaders = getHeaderListFromCSV(argv[1], ",")
-    #print(Xheaders)
-    #print(X)
+
+    #first off, shuffle the order so the classes are interspersed
+    #use a predefined seed so that we get the same results repeatedly
+    #AND avoid a bug where the KFold classifier doesn't get one of each class later in this script
+    random.Random(1).shuffle(X)
     
     #extract classifications from X
     Y = []
@@ -128,7 +196,6 @@ def main(argv):
         
     #print(X)
     Xprepared = scaleFeatures(X)
-    #print(Xprepared[0])
     
     #replace Y textual labels with binary labels 
     for i in range(0, len(Y)):
