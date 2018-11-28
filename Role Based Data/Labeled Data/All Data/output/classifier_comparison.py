@@ -21,7 +21,9 @@ from sklearn.neural_network import MLPClassifier
 from sklearn.neural_network import MLPRegressor
 from sklearn.linear_model import LogisticRegression
 from sklearn.tree import DecisionTreeClassifier
+from sklearn.tree import export_graphviz
 from sklearn.model_selection import KFold
+from sklearn.metrics import f1_score
 
 def getHeaderListFromCSV(filename, delimiter):
     with io.open(filename, encoding="ISO-8859-1") as csvFile:
@@ -77,42 +79,62 @@ def foldTrainTest(X, Y, classifier, nFolds=10):
     kf = KFold(n_splits=nFolds) #maybe try the shuffle param on the activity recognition stuff?
     correct = 0
     outOf = 0
+    f1Subtotal = 0
     for train_index, test_index in kf.split(X):
         Xtrain, Xtest = X[train_index], X[test_index]
         Ytrain, Ytest = Y[train_index], Y[test_index]
+        
+        #checking to make sure test and train sets are disjoint
+        #print("train indices: " + str(train_index))
+        #print("test indices: " + str(test_index))
+        
         outOf += len(Ytest) #average accuracy will be calculated as (correct / outOf)
         classifier.fit(Xtrain, Ytrain)
 
         response = classifier.predict(Xtest)
+        f1Subtotal += f1_score(Ytest, response)
         for i in range(0,len(Xtest)):
             if response[i] == Ytest[i]:
                 correct += 1
     
     plotLearningCurve(classifier, classifier.__class__.__name__, X, Y)#, cv=kf.split(X))
-            
-    return correct / outOf
+    
+    return [correct / outOf, f1Subtotal / nFolds]
 
 def testMLPC(X, Y, nFolds=10):
     #construct the neural network 
     numFeatures = len(X[0])
+    
     #architectureTuple = (numFeatures, int(math.floor((3/4)*numFeatures)), int(math.floor((1/2)*numFeatures)))
     #architectureTuple = (numFeatures, int(math.floor((3/4)*numFeatures)), int(math.floor((1/2)*numFeatures)), int(math.floor((1/4)*numFeatures)))
-    architectureTuple = (numFeatures * 4)
     #architectureTuple = (numFeatures * 2, numFeatures, int(math.floor((3/4)*numFeatures)), int(math.floor((1/2)*numFeatures)), int(math.floor((1/4)*numFeatures)))
     #architectureTuple = (50, 50, 50, 50, 50)
     #print("Hidden layer sizes: " + str(architectureTuple))
-    #mlp = MLPRegressor(activation='relu', hidden_layer_sizes=architectureTuple, max_iter=1000)
+    
+    architectureTuple = (numFeatures * 4)
+    
+
     mlp = MLPClassifier(activation='relu', hidden_layer_sizes=architectureTuple, max_iter=1000)
-    print("MLPC Accuracy (" + str(nFolds) + "-fold):" + str(foldTrainTest(X, Y, mlp, nFolds)))
+    accuracy, f1 = foldTrainTest(X, Y, mlp, nFolds)
+    print("MLPC Accuracy (" + str(nFolds) + "-fold):" + str(accuracy) + ", F1-Score: " + str(f1))
     
 def testLogisticRegression(X, Y, nFolds=10):
     #construct logisitic regressor for comparison
     clf = LogisticRegression()
-    print("Logistic Regression Accuracy (" + str(nFolds) + "-fold):" + str(foldTrainTest(X, Y, clf, nFolds)))
+    accuracy, f1 = foldTrainTest(X, Y, clf, nFolds)
+    print("Logistic Regression Accuracy (" + str(nFolds) + "-fold):" + str(accuracy) + ", F1-Score: " + str(f1))
     
 def testDecisionTree(X, Y, nFolds=10):
     clf = DecisionTreeClassifier()
-    print("Decision Tree Accuracy (" + str(nFolds) + "-fold):" + str(foldTrainTest(X, Y, clf, nFolds)))
+    accuracy, f1 = foldTrainTest(X,Y,clf,nFolds)
+    print("Decision Tree Accuracy (" + str(nFolds) + "-fold):" + str(accuracy) + ", F1-Score: " + str(f1))
+    export_graphviz(clf, out_file="decision_tree.dot")
+    
+def testShallowDecisionTree(X,Y,nFolds=10):
+    clf = DecisionTreeClassifier(max_depth=2)
+    accuracy, f1 = foldTrainTest(X,Y,clf,nFolds)
+    print("Shallow Decision Tree Accuracy (" + str(nFolds) + "-fold):" + str(accuracy) + ", F1-Score: " + str(f1))
+    export_graphviz(clf, out_file="shallow_decision_tree.dot")
 
 #this function is essentially verbatim from: http://scikit-learn.org/0.15/auto_examples/plot_learning_curve.html
 def plotLearningCurve(estimator, title, X, y, ylim=None, cv=None,
@@ -190,9 +212,9 @@ def main(argv):
         
     #print(Y)
     
-    #remove classifications (and class description) from X
+    #remove classifications, description, and user from X
     for i in range(0,len(X)):
-        X[i] = X[i][:-2]
+        X[i] = X[i][:-3]
         
     #print(X)
     Xprepared = scaleFeatures(X)
@@ -212,6 +234,7 @@ def main(argv):
     testMLPC(Xprepared, Y)
     testLogisticRegression(Xprepared, Y)
     testDecisionTree(numpy.asarray(X), Y)
+    testShallowDecisionTree(numpy.asarray(X), Y)
 
 if __name__ == "__main__":
     main(sys.argv)
