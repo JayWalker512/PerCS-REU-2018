@@ -8,7 +8,9 @@ import numpy as np
 import random
 
 
-
+#amount: how many new examples to generate
+#whether the the "walking" feature should == 1 in new examples
+#p: probability of app being used in a particular example
 def generateNormal(amount = 25, walking = "0", p = .5):
     global X
     global Z
@@ -25,17 +27,16 @@ def generateNormal(amount = 25, walking = "0", p = .5):
      
     
     max_user = -1 
-    if (p > 1):
-        p = 1
-    if (p < 0):
-        p = 0
+    p = np.clip(p, 0, 1) #restrict p to range [0,1]
     for a in range(1,len(Z)):
-        max_user = max(max_user, int(Z[a][0]))
+        max_user = max(max_user, int(Z[a][0])) #get the max current UserID, we'll increment this as we add examples
     
-    a = 0
+    a = 0 #this is just an index variable we count up until arriving at 'amount'
     while (a < amount):
         X.append([])
         Y.append([])
+        
+        #This loop never runs! len(Y[0]) == 0
         for b in range(len(Y[0])):
             label = Y[0][b]
             if (label in bool_y):
@@ -48,8 +49,10 @@ def generateNormal(amount = 25, walking = "0", p = .5):
                 Y[len(Y)-1].append(str(random.uniform(rate * .9, rate * 1.1)))
             else:
                 Y[len(Y)-1].append("0")
+        
+        
         Z.append([])
-        Z[len(Z)-1].append(str(max_user + 1))
+        Z[len(Z)-1].append(str(max_user + 1)) #for the data we're adding, increment user id
         Z[len(Z)-1].append("Normal")
         Z[len(Z)-1].append("Normal")
         
@@ -57,8 +60,10 @@ def generateNormal(amount = 25, walking = "0", p = .5):
         app_usage = 0
         delete = True
         
-        c_time = random.randint(min_time, max_time)
+        c_time = random.randint(min_time, max_time) #"current" time?
         
+        #this loop generates new start & end times for the various activities, and calculates the elapsed time.
+        #These new values are put in columns of X for the current example 'a'
         for b in range(len(X[0])-3):
             if ("Start" in X[0][b]):
                 if (float(X[len(X)-1][b-1]) > 0):
@@ -113,7 +118,7 @@ def generateNormal(amount = 25, walking = "0", p = .5):
                 seq_start = 0 # Some Date in 2118
                 seq_end = 0
                 
-            rate = (1.39/1000.0)             
+            rate = (1.39/1000.0) #scaled GPS magnitude accumulation rate            
             r2 = random.uniform(rate * .9, rate * 1.1)
             X[len(X)-1].append(str((float(seq_end) - float(seq_start)) * r2))                
             X[len(X)-1].append("1")
@@ -140,8 +145,12 @@ def generateNormal(amount = 25, walking = "0", p = .5):
         else:
             a = a + 1
 
+#amount: how many examples to generate
+#p: probability of "Device Rooted" and "Mock GPS"
 def generateAttackSpoofingGPS(amount = 25, p = .5, attackType = "StationaryDrift"):
     global X
+    
+    #In this context, Y is for new columns we're adding I guess?
     global Y
     global Z
     
@@ -149,13 +158,15 @@ def generateAttackSpoofingGPS(amount = 25, p = .5, attackType = "StationaryDrift
     global bool_y
     global rate_y
 
-    ind = X[0].index("Distance Magnitude")
+    index_of_distance_magnitude = X[0].index("Distance Magnitude")
     rate = 0           
     
     if ("Mock GPS" not in ind_y):
         Y[0].append("Mock GPS")
-        ind_y["Mock GPS"] = len(Y[0])-1
+        ind_y["Mock GPS"] = len(Y[0])-1 #note the index of the "Mock GPS" column
         bool_y.append("Mock GPS")
+        
+        #apply 1 or 0 in "Mock GPS" column according to probability p
         for b in range(1, len(Y)):
             if (random.random() < p):
                 Y[b].append("1")                        
@@ -164,19 +175,23 @@ def generateAttackSpoofingGPS(amount = 25, p = .5, attackType = "StationaryDrift
         
     if ("Device Rooted" not in ind_y):
         Y[0].append("Device Rooted")
-        ind_y["Device Rooted"] = len(Y[0])-1
+        ind_y["Device Rooted"] = len(Y[0])-1 #note the index of the "Mock GPS" column
         bool_y.append("Device Rooted")
+        
+        #apply 1 or 0 in "Device Rooted" column according to probability p
         for b in range(1, len(Y)):
             if (random.random() < p):
                 Y[b].append("1")                        
             else:
                 Y[b].append("0")
     
+    
     if ("GPS Rate" not in ind_y):
         Y[0].append("GPS Rate")
-        ind_y["GPS Rate"] = len(Y[0])-1          
+        ind_y["GPS Rate"] = len(Y[0])-1 #note the index of the "GPS Rate" column
         rate_y["GPS Rate"] = .0014    
     
+        #iterate over each example and add the new "GPS Rate" column and update  GPS Distance Magnitude
         for a in range(1, len(Y)):
             seq_start = 4687389847 # Some Date in 2118
             seq_end = -1
@@ -186,21 +201,31 @@ def generateAttackSpoofingGPS(amount = 25, p = .5, attackType = "StationaryDrift
                         seq_start = min(seq_start, float(X[a][b]))
                 if ("End" in X[0][b]):
                     seq_end = max(seq_end, float(X[a][b]))
-            rate = float(X[a][ind]) / (seq_end - seq_start)             
+                    
+            #determine GPS rate by assuming constant rate over sequence duration
+            rate = float(X[a][index_of_distance_magnitude]) / (seq_end - seq_start)   
+            #add some random variability
             r2 = random.uniform(rate * .9, rate * 1.1)
-            X[a][ind] = str((float(seq_end) - float(seq_start)) * r2)            
+            #calculate new distance
+            X[a][index_of_distance_magnitude] = str((float(seq_end) - float(seq_start)) * r2)            
+            #insert the rate to features for this example
             Y[a].append(str(r2))    
     
+    #if we're not walking, add a small drift
     if ("StationaryDrift" in attackType):
         generateNormal(amount = amount, walking = "0", p = p)
         rate = (.695/1000.0)
             
+    #if we're walking, need to account for walking GPS rate + drift
     if ("WalkingDrift" in attackType):
         generateNormal(amount = amount, walking = "1", p = p)
         rate = (2.78/1000.0)         
         
+    #randomly decide if "Mock GPS" and "Device Rooted" are set.
     for b in range(len(Y)-1,len(Y)-1-amount,-1):
         r = random.randint(0,2)
+        
+        #first and last cases are identical? Why?
         if (r == 0):
             Y[b][ind_y["Mock GPS"]] = "1"
             Y[b][ind_y["Device Rooted"]] = "1"
@@ -211,20 +236,24 @@ def generateAttackSpoofingGPS(amount = 25, p = .5, attackType = "StationaryDrift
             Y[b][ind_y["Mock GPS"]] = "1"
             Y[b][ind_y["Device Rooted"]] = "1"
         
+    #iterate (backwards) through the examples we've added and label them appropriately    
     for a in range(len(X)-1,len(X)-1-amount,-1):
         Z[a][len(Z[a])-2] = "GPS Spoofing"
         Z[a][len(Z[a])-1] = "Abnormal"
         seq_start = 4687389847 # Some Date in 2118
         seq_end = -1
+        
         for b in range(len(X[0])-3):
             if ("Start" in X[0][b]):
                 if (float(X[a][b]) > 0):
                     seq_start = min(seq_start, float(X[a][b]))
             if ("End" in X[0][b]):
                 seq_end = max(seq_end, float(X[a][b]))
+                
+        #update the GPS Rate and Distance Magnitude for the rates we chose earlier
         r2 = random.uniform(rate * .9, rate * 1.1)
         Y[a][ind_y["GPS Rate"]] = str(r2) 
-        X[a][ind] = str((float(seq_end) - float(seq_start)) * r2)        
+        X[a][index_of_distance_magnitude] = str((float(seq_end) - float(seq_start)) * r2)        
         
 
 def generateAttackBatteryDrain(amount = 25, p = .5, attackType = "Standard"):
@@ -237,19 +266,19 @@ def generateAttackBatteryDrain(amount = 25, p = .5, attackType = "Standard"):
     global rate_y
     
     rate = (.53171/60)
+    screen_rate = (.25/60)
  
+    #add label to the new column
     if ("Energy Rate" not in ind_y):
         Y[0].append("Energy Rate")
         ind_y["Energy Rate"] = len(Y[0])-1
         rate_y["Energy Rate"] = rate
-        
-#        Y[0].append("Energy Magnitude")
-#        ind_y["Energy Magnitude"] = len(Y[0])-1    
-#        rate_y["Energy Magnitude"] = 0
     
+        #fill the column with values
         for a in range(1, len(Y)):
             seq_start = 4687389847 # Some Date in 2118
             seq_end = -1
+            
             for b in range(len(X[0])-3):
                 if ("Start" in X[0][b]):
                     if (float(X[a][b]) > 0):
@@ -261,15 +290,46 @@ def generateAttackBatteryDrain(amount = 25, p = .5, attackType = "Standard"):
             Y[a].append(str(r2))    
             #Y[a].append(str(int(((seq_end - seq_start)/1000.0) * r2)))
     
+    #add new column
+    app_usage_count_index = X[0].index("App Usage Count")
+    energy_rate_index = Y[0].index("Energy Rate")
+    if ("Screen On" not in ind_y):
+        Y[0].append("Screen On")
+        ind_y["Screen On"] = len(Y[0])-1
+        bool_y.append("Screen On")
+        
+        #if "App Usage Count" > 0, "Screen On" should always be true.
+        #Otherwise, apply 1 or 0 in "Screen On" column according to probability p
+        for b in range(1, len(Y)):
+            screen_on = False
+            if (X[b][app_usage_count_index] == "1"):
+                Y[b].append("1")
+                screen_on = True
+            else:
+                if (random.random() < p):
+                    Y[b].append("1")     
+                    screen_on = True
+                else:
+                    Y[b].append("0")
+                    
+            #if we set the screen on, increase the energy rate
+            if (screen_on):
+                #screen_percentage = float(Y[b][energy_rate_index]) * 0.18 #according to my phone
+                #Y[b][energy_rate_index] = str(float(Y[b][energy_rate_index]) - screen_percentage)
+                Y[b][energy_rate_index] = str(float(Y[b][energy_rate_index]) - screen_rate) 
+    
     generateNormal(amount = int(amount/2), walking = "0", p = p)
     generateNormal(amount = amount - int(amount/2), walking = "1", p = p)
     
     if ("Standard" in attackType):        
-        rate = .00433027
+        rate = .00433027 #arbitrary rate?
             
+    #doesn't seem to make a difference!
     if ("SleepDeprivation" in attackType):        
-        rate = .00433027
+        rate = .00433027 #arbitrary rate?
+        #why is the number lower for a battery drain attack than normal scenario?
         
+    #iterate backwards and add labels for attack type
     for a in range(len(X)-1,len(X)-1-amount,-1):
         Z[a][len(Z[a])-2] = "Battery Drain"
         Z[a][len(Z[a])-1] = "Abnormal"
@@ -281,7 +341,14 @@ def generateAttackBatteryDrain(amount = 25, p = .5, attackType = "Standard"):
                     seq_start = min(seq_start, float(X[a][b]))
             if ("End" in X[0][b]):
                 seq_end = max(seq_end, float(X[a][b]))
+                
+        #add battery drain rate to the appropriate column with some noise, and adjustment for screen usage
         r2 = random.uniform(rate * .9, rate * 1.1)
+        
+        if (Y[a][ind_y["Screen On"]] == "1"):
+            r2 -= screen_rate
+            #r2 -= r2 * 0.18 #increase consumption 18%
+            
         Y[a][ind_y["Energy Rate"]] = (str(r2))    
         #Y[a][ind_y["Energy Rate"]] = (str(int(((seq_end - seq_start)/1000.0) * r2)))
 
@@ -363,6 +430,9 @@ ind_y = {}
 bool_y = []
 rate_y = {}
 
+#X has training data, including Shoulder Radio, Shoulder Radio Start,...,through Walking, App Usage Count
+#Y is empty at this point 
+#Z has User ID, Anomaly type, and classification of "Normal" or "Anomaly"
 
 ##################################### Inject Attacks Here ############################
 
